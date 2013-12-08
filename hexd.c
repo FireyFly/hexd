@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -324,6 +325,12 @@ int main(int argc, char *argv[]) {
     for (int i = files_idx; i < argc; i++) {
       FILE *f = strcmp(argv[i], "-") == 0?  stdin
               : /*else*/                    fopen(argv[i], "r");
+
+      if (f == NULL) {
+        fprintf(stderr, "%s: Couldn't open file '%s': %s\n",
+                argv[0], argv[i], strerror(errno));
+        return 2;
+      }
 
       if (argc - files_idx > 1) {
         printf("%s====> \033[1m%s\033[m <====\n", i > files_idx? "\n" : "", argv[i]);
