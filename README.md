@@ -10,4 +10,4 @@ Various more-or-less useful utilities and tools.
   colours and good use of terminal width.  Colours are configurable via the
   `HEXD_COLORS` environment variable.  Supports a limited set of flags.
 
-  ![hexd screenshot](/FireyFly/utilities/raw/master/meta/hexd.png)
+  ![hexd screenshot](https://github.com/FireyFly/utilities/raw/master/meta/hexd.png)
