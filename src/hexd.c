@@ -171,10 +171,7 @@ int parse_int(char *str) {
     p += 2;
   }
 
-  while (*p++) {
-    res = res * radix + (*(p - 1) - '0');
-  }
-
+  while (*p++) res = res * radix + (p[-1] - '0');
   return res;
 }
 
@@ -202,7 +199,7 @@ struct range parse_range(char *str) {
  * index of rest-of-arguments (in `argv`). */
 int process_flags(int argc, char *argv[]) {
   char *arg, *value;
-  int i, j;
+  int i;
 
   for (i=1; i < argc; i++) {
     arg = argv[i];

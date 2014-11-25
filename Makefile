@@ -1,11 +1,17 @@
 CFLAGS += -std=c99
 
+BINARIES=hexd plaintext
+
 .PHONY: all
-all: hexd
+all: bin $(BINARIES)
 
 .PHONY: clean
 clean:
-	rm *.o hexd
+	cd bin; rm -f $(BINARIES)
+	rmdir bin
 
-hexd: hexd.o
-	$(CC) -o $@ $^
+bin:
+	mkdir bin
+
+%: src/%.c
+	$(CC) $(CFLAGS) -o bin/$@ $^
