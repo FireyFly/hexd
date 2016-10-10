@@ -1,13 +1,13 @@
 CFLAGS += -std=c11
 
-BINARIES=hexd
+BINARIES=bin/hexd
 
 .PHONY: all
 all: $(BINARIES)
 
 .PHONY: clean
 clean:
-	cd bin; rm -f $(BINARIES)
+	rm -f $(BINARIES)
 
-%: src/%.c
-	$(CC) $(CFLAGS) -o bin/$@ $^
+bin/hexd: src/hexd/hexd.c
+	$(CC) $(CFLAGS) -o $@ $^

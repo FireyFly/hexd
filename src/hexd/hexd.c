@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 1L
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
