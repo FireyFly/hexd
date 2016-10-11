@@ -1,0 +1,114 @@
+.Dd October 11, 2016
+.Dt HEXD 1
+.Os
+.Sh NAME
+.Nm hexd
+.Nd human-friendly hexdump tool
+.Sh SYNOPSIS
+.Nm
+.Op Fl p
+.Op Fl g Ar groupsize
+.Op Fl r Ar range
+.Op Fl w Ar width
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+prints a human-readable hexdump of the specified files, or standard input if
+omitted.
+Its main distinguishing feature is the use of colours to visually indicate
+which range of values an octet belongs to, aiding in spotting patterns in
+binary data.
+.Pp
+The ranges an octet is classified into are
+.Em zero
+.Li ( 0x00 ) ,
+.Em low
+.Li ( 0x01..0x1F ) ,
+.Em printable
+.Li ( 0x20..0x7E ) ,
+.Em high
+.Li ( 0x7F..0xFE )
+and
+.Em all
+.Li ( 0xFF ) .
+.Sh OPTIONS
+If no
+.Ar file
+operands are specified, standard input is read instead.
+Available options are listed below.
+.Bl -tag -width Ds
+.It Fl p
+Plain: disable colours/formatting.
+.It Fl g Ar groupsize
+Number of octets per group, set to
+.Li 8
+by default.
+.It Fl r Ar range
+Range of octets to print from each file. Specified as either
+.Em start-end
+or
+.Em start+count ,
+where
+.Em start
+and
+.Em end Ns / Ns Em count
+are positive integers specified in either decimal, hexadecimal or octal
+(C-style notation).
+.Pp
+When the former syntax is used, both ends of the range are optional and
+default to the start or end of the file when omitted.
+.It Fl w Ar width
+Number of octets per line, separated into groups (see
+.Fl g ) .
+Set to
+.Li 16
+by default.
+.El
+.Sh ENVIRONMENT
+.Ev HEXD_COLORS
+can be used to override the formatting used by
+.Nm
+to classify octets.
+If set, it should consist of space-separated pairs of the
+form
+.Em key=value ,
+where
+.Em key
+is one of 'zero', 'low', 'printable', 'high' or 'all', and
+.Em value
+is an SGR formatting string.
+SGR formatting is interpreted by your terminal emulator; consult its
+documentation or ECMA-48 for more details.
+.Pp
+For example, the default formatting used when
+.Ev HEXD_COLORS
+is not defined corresponds to the value
+.Pp
+.D1 Em zero=38;5;238 low=38;5;150 high=38;5;141 all=38;5;167
+.Sh EXAMPLES
+Here are some examples of useful uses of hexd's features.
+.Bl -tag -width Ds
+.It Em hexd -r0x1000+0x200 foo.bin
+Display the 512-byte range in 'foo.bin' starting at offset 0x1000.
+Useful when files contain other embedded files/formats at a certain location
+(e.g. archive files).
+.It Em hexd -r-0x10 *.bin
+Show the first 16 bytes of each of the *.bin files, with a heading above each
+file (if more than one).
+This is useful for example to compare headers of several samples of an unknown
+format.
+.It Em curl -s http://example.com | hexd | less -R
+.Nm
+works as a filter, too.
+For paging long hexdumps,
+.Xr less 1 Ns 's
+.Fl R
+flag is useful.
+.El
+.Sh SEE ALSO
+.Xr hexdump 1 ,
+.Xr od 1 ,
+.Xr xxd 1
+.Sh AUTHORS
+Written by
+.An Jonas ‘FireFly’ Höglund.

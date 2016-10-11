@@ -3,17 +3,12 @@
 
 Various more-or-less useful utilities and tools.
 
-
 ## hexd
-  hexd is a simple `hexdump`-alike with pretty colours to make it easy to
-  discern structure at a glance.  Colours are configurable via the
-  `HEXD_COLORS` environment variable.  Limited support for command-line flags;
-  try `-h` for more information.
-
-  ![hexd screenshot](https://github.com/FireyFly/utilities/raw/master/meta/hexd.png)
-
+  hexd prints a human-readable hexdump of the specified files, or standard
+  input if omitted.  Its main distinguishing feature is the use of colours to
+  visually indicate which range of values an octet belongs to, aiding in
+  spotting patterns in binary data.
 
 ## plaintext
-  A simple filter that removes all CSI control sequences from stdin and copies
-  to stdout.  This includes SGR formatting such as colours, as well as other
-  control sequences for cursor movement etc.
+  A simple filter that strips all CSI control sequences from stdin.  This
+  includes SGR formatting as well as other terminal control codes.

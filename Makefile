@@ -9,5 +9,5 @@ all: $(BINARIES)
 clean:
 	rm -f $(BINARIES)
 
-bin/hexd: src/hexd/hexd.c
+bin/hexd: hexd/hexd.c
 	$(CC) $(CFLAGS) -o $@ $^
