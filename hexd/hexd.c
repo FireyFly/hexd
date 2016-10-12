@@ -183,7 +183,10 @@ int main(int argc, char *argv[]) {
   } else {
     for (size_t i = 0; i < argc; i++) {
       FILE *f = fopen(argv[i], "r");
-      if (f == NULL) warn("%s", argv[i]);
+      if (f == NULL) {
+        warn("%s", argv[i]);
+        continue;
+      }
 
       if (argc > 1) {
         printf("%s====> %s%s%s <====\n", i > 0? "\n" : "",
