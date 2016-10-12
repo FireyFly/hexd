@@ -26,14 +26,12 @@ char *formatting_high      = "38;5;141";
 char *formatting_printable = "";
 
 //-- Hexdump impl -----------
-void print_format_of(int v) {
-  if (!option_use_formatting) return;
-  printf("\x1B[%sm", v == -1?    ""
-                   : v == 0x00?  formatting_zero
-                   : v == 0xFF?  formatting_all
-                   : v <  0x20?  formatting_low
-                   : v >= 0x7F?  formatting_high
-                   :             formatting_printable);
+const char *format_of(int v) {
+  return v == 0x00?  formatting_zero
+       : v == 0xFF?  formatting_all
+       : v <  0x20?  formatting_low
+       : v >= 0x7F?  formatting_high
+       :             formatting_printable;
 }
 
 void hexdump(FILE *f) {
@@ -75,29 +73,34 @@ void hexdump(FILE *f) {
       size_t offset = option_range.start + read + i;
       printf("%5zx%03zx", offset >> 12, offset & 0xFFF);
 
-      // Print actual hexdump part
+      // Print hex area
+      const char *prev_fmt = NULL;
       for (size_t j = 0; j < option_columns; j++) {
         if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
         if (i + j < n) {
-          print_format_of(p[j]);
+          const char *fmt = format_of(p[j]);
+          if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
           printf(" %02x", p[j]);
-          print_format_of(-1);
+          prev_fmt = fmt;
+        } else {
+          printf("   ");
         }
-        else printf("   ");
       }
       putchar(' ');
 
+      // Print char area
       for (size_t j = 0; j < option_columns; j++) {
         if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
         if (i + j < n) {
-          print_format_of(p[j]);
+          const char *fmt = format_of(p[j]);
+          if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
           putchar(isprint(p[j])? p[j] : '.');
-          print_format_of(-1);
+          prev_fmt = fmt;
+        } else {
+          putchar(' ');
         }
-        else putchar(' ');
       }
-
-      putchar('\n');
+      printf("%s\n", option_use_formatting? "\x1B[m" : "");
 
       memcpy(last_line, p, MIN(n - i, option_columns));
       first_line = false;
@@ -158,28 +161,19 @@ int main(int argc, char *argv[]) {
   char *colors_var = getenv("HEXD_COLORS");
   if (colors_var != NULL) {
     colors_var = strdup(colors_var);
-    if (colors_var == NULL) errx(1, NULL);
+    if (colors_var == NULL) errx(1, "strdup");
 
-    char *p = colors_var;
-    while (p != NULL && *p != '\0') {
-      char *q = p + strcspn(p, " ");
-      char *next = *q == '\0'? NULL : q + 1;
-      *q = '\0';
-
-      if (p == q) continue; // Ignore empty fields
-
-      char *key = p, *value = strchr(p, '=');
+    for (char *p = colors_var, *token; token = strtok(p, " "), token != NULL; p = NULL) {
+      char *key = token, *value = strchr(token, '=');
       if (value == NULL) warnx("no '=' found in HEXD_COLORS property '%s'", p);
-
       *value++ = '\0';
+
       if      (strcmp(key, "zero")      == 0) formatting_zero      = value;
       else if (strcmp(key, "low")       == 0) formatting_low       = value;
       else if (strcmp(key, "printable") == 0) formatting_printable = value;
       else if (strcmp(key, "high")      == 0) formatting_high      = value;
       else if (strcmp(key, "all")       == 0) formatting_all       = value;
       else warnx("unknown HEXD_COLORS property '%s'", key);
-
-      p = next;
     }
   }
 
@@ -189,13 +183,13 @@ int main(int argc, char *argv[]) {
   } else {
     for (size_t i = 0; i < argc; i++) {
       FILE *f = fopen(argv[i], "r");
-      if (f == NULL) err(1, "%s", argv[i]);
+      if (f == NULL) warn("%s", argv[i]);
 
       if (argc > 1) {
         printf("%s====> %s%s%s <====\n", i > 0? "\n" : "",
                                          option_use_formatting? "\x1B[1m" : "",
                                          argv[i],
-                                         option_use_formatting? "\x1B[1m" : "");
+                                         option_use_formatting? "\x1B[m" : "");
       }
 
       hexdump(f);
