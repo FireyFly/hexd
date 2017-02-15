@@ -35,6 +35,17 @@ const char *format_of(int v) {
        :             formatting_printable;
 }
 
+const char *CHAR_AREA_HIGH_LUT[] = {
+  "€", ".", "‚", "ƒ", "„", "…", "†", "‡", "ˆ", "‰", "Š", "‹", "Œ", ".", "Ž", ".",
+  ".", "‘", "’", "“", "”", "•", "–", "—", "˜", "™", "š", "›", "œ", ".", "ž", "Ÿ",
+  ".", "¡", "¢", "£", "¤", "¥", "¦", "§", "¨", "©", "ª", "«", "¬", ".", "®", "¯",
+  "°", "±", "²", "³", "´", "µ", "¶", "·", "¸", "¹", "º", "»", "¼", "½", "¾", "¿",
+  "À", "Á", "Â", "Ã", "Ä", "Å", "Æ", "Ç", "È", "É", "Ê", "Ë", "Ì", "Í", "Î", "Ï",
+  "Ð", "Ñ", "Ò", "Ó", "Ô", "Õ", "Ö", "×", "Ø", "Ù", "Ú", "Û", "Ü", "Ý", "Þ", "ß",
+  "à", "á", "â", "ã", "ä", "å", "æ", "ç", "è", "é", "ê", "ë", "ì", "í", "î", "ï",
+  "ð", "ñ", "ò", "ó", "ô", "õ", "ö", "÷", "ø", "ù", "ú", "û", "ü", "ý", "þ", "ÿ",
+};
+
 void hexdump(FILE *f, const char *filename) {
   u8 buf[BUFSIZ];
   u8 last_line[option_columns];
@@ -96,7 +107,8 @@ void hexdump(FILE *f, const char *filename) {
         if (i + j < n) {
           const char *fmt = format_of(p[j]);
           if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
-          putchar(isprint(p[j])? p[j] : '.');
+          if (p[j] >= 0x80) printf("%s", CHAR_AREA_HIGH_LUT[p[j] - 0x80]);
+          else putchar(isprint(p[j])? p[j] : '.');
           prev_fmt = fmt;
         } else {
           putchar(' ');
