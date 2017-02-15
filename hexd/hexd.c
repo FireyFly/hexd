@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <ctype.h>
 #include <err.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -12,18 +13,18 @@
 typedef uint8_t u8;
 
 //-- Options ----------------
-struct range { size_t start, end; };
+struct offset_range { off_t start, end; };
 
 size_t option_columns      = 16;
 size_t option_groupsize    = 8;
 bool option_use_formatting = true;
-struct range option_range  = { 0, -1 };
+struct offset_range option_range  = { 0, -1 };
 
-char *formatting_zero      = "38;5;238";
-char *formatting_all       = "38;5;167";
-char *formatting_low       = "38;5;150";
-char *formatting_high      = "38;5;141";
-char *formatting_printable = "";
+const char *formatting_zero      = "38;5;238";
+const char *formatting_all       = "38;5;167";
+const char *formatting_low       = "38;5;150";
+const char *formatting_high      = "38;5;141";
+const char *formatting_printable = "";
 
 //-- Hexdump impl -----------
 const char *format_of(int v) {
@@ -34,27 +35,28 @@ const char *format_of(int v) {
        :             formatting_printable;
 }
 
-void hexdump(FILE *f) {
+void hexdump(FILE *f, const char *filename) {
   u8 buf[BUFSIZ];
   u8 last_line[option_columns];
 
   bool first_line = true, printed_asterisk = false;
 
   // Seek to start; fall back to a consuming loop for non-seekable files
-  if (fseek(f, option_range.start, SEEK_SET) < 0) {
-    size_t remaining = option_range.start;
+  if (fseeko(f, option_range.start, SEEK_SET) < 0) {
+    off_t remaining = option_range.start;
     while (remaining != 0 && !feof(f) && !ferror(f)) {
       size_t n = fread(buf, 1, MIN(remaining, BUFSIZ), f);
       remaining -= n;
       if (n == 0) break;
     }
-    if (ferror(f)) err(1, NULL);
+    if (ferror(f)) err(1, "(while seeking) %s", filename);
   }
 
-  size_t count = option_range.end - option_range.start;
-  size_t read = 0;
+  off_t count = option_range.end - option_range.start;
+  off_t read = 0;
   while (read != count && !feof(f) && !ferror(f)) {
-    size_t n = fread(buf, 1, MIN(count - read, BUFSIZ), f);
+    size_t to_read = option_range.end == -1? BUFSIZ : MIN(count - read, BUFSIZ);
+    size_t n = fread(buf, 1, to_read, f);
 
     for (size_t i = 0; i < n; i += option_columns) {
       u8 *p = &buf[i];
@@ -109,24 +111,24 @@ void hexdump(FILE *f) {
     read += n;
   }
 
-  if (ferror(f)) err(1, NULL);
+  if (ferror(f)) err(1, "(while reading) %s", filename);
 }
 
 //-- Entry point ------------
 /** Parses a range "start-end" (both ends optional) or "start+size" (neither
- *  optional) into a `struct range` instance. */
-struct range parse_range(const char *str) {
-  struct range res = { 0, -1 };
+ *  optional) into a `struct offset_range` instance. */
+struct offset_range parse_range(const char *str) {
+  struct offset_range res = { 0, -1 };
   const char *first = str, *delim = str + strcspn(str, "+-"), *second = delim + 1;
   if (*delim == '\0') errx(1, "no delimiter in range %s", str);
 
   char *end;
   if (first != delim) {
-    res.start = strtol(first, &end, 0);
+    res.start = strtoimax(first, &end, 0);
     if (!isdigit(*first) || end != delim) errx(1, "invalid start value in range %s", str);
   }
   if (*second != '\0') {
-    res.end = strtol(second, &end, 0);
+    res.end = strtoimax(second, &end, 0);
     if (!isdigit(*second) || *end != '\0') errx(1, "invalid end/size value in range %s", str);
   }
 
@@ -179,7 +181,7 @@ int main(int argc, char *argv[]) {
 
   // Hexdump files
   if (argc == 0) {
-    hexdump(stdin);
+    hexdump(stdin, "(stdin)");
   } else {
     for (size_t i = 0; i < argc; i++) {
       FILE *f = fopen(argv[i], "r");
@@ -195,7 +197,7 @@ int main(int argc, char *argv[]) {
                                          option_use_formatting? "\x1B[m" : "");
       }
 
-      hexdump(f);
+      hexdump(f, argv[i]);
       fclose(f);
     }
   }
