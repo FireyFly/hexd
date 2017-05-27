@@ -48,7 +48,7 @@ const char *CHAR_AREA_HIGH_LUT[] = {
 
 void hexdump(FILE *f, const char *filename) {
   u8 buf[BUFSIZ];
-  u8 last_line[option_columns];
+  u8 prev_line[option_columns];
 
   bool first_line = true, printed_asterisk = false;
 
@@ -73,7 +73,7 @@ void hexdump(FILE *f, const char *filename) {
       u8 *p = &buf[i];
 
       // Contract repeated identical lines
-      if (!first_line && memcmp(p, last_line, option_columns) == 0) {
+      if (!first_line && memcmp(p, prev_line, option_columns) == 0) {
         if (!printed_asterisk) {
           printf("%8s\n", "*");
           printed_asterisk = true;
@@ -116,7 +116,7 @@ void hexdump(FILE *f, const char *filename) {
       }
       printf("%s\n", option_use_formatting? "\x1B[m" : "");
 
-      memcpy(last_line, p, MIN(n - i, option_columns));
+      memcpy(prev_line, p, MIN(n - i, option_columns));
       first_line = false;
     }
 
@@ -150,7 +150,7 @@ struct offset_range parse_range(const char *str) {
     res.end += res.start;
   }
 
-  if (res.end < res.start) errx(1, "end was less than start in range %s", str);
+  if (res.end < res.start && res.end != -1) errx(1, "end was less than start in range %s", str);
   return res;
 }
 
