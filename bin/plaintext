@@ -1,3 +1,0 @@
-#!/bin/sed -f
-# Strips all escape sequences and control codes from stdin.
-s:[\x00-\x08\x0E-\x1F]\|\x1B\(\[[0-?]*[ -/]*[@-~]\)::g
