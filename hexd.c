@@ -83,8 +83,8 @@ void hexdump(FILE *f, const char *filename) {
       printed_asterisk = false;
 
       // Offset
-      size_t offset = option_range.start + read + i;
-      printf("%5zx%03zx", offset >> 12, offset & 0xFFF);
+      intmax_t offset = option_range.start + read + i;
+      printf("%5jx%03jx", offset >> 12, offset & 0xFFF);
 
       // Print hex area
       const char *prev_fmt = NULL;
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
   if (argc == 0) {
     hexdump(stdin, "(stdin)");
   } else {
-    for (size_t i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++) {
       FILE *f = fopen(argv[i], "r");
       if (f == NULL) {
         warn("%s", argv[i]);
