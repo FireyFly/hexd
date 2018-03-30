@@ -1,27 +1,17 @@
 CFLAGS += -Wall -std=c11
 
-ifeq ($(DEBUG),1)
-  CFLAGS += -g -DDEBUG
-endif
-
-PREFIX=/usr/local
-BINDIR=$(PREFIX)/bin
-SHAREDIR=$(PREFIX)/share
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+MANDIR ?= $(PREFIX)/share/man
 
 .PHONY: all
-all: hexd hexd.1.gz
+all: hexd
 
 .PHONY: clean
 clean:
-	rm -f hexd hexd.1.gz
+	rm -f hexd
 
 .PHONY: install
-install:
+install: hexd
 	install -D hexd $(DESTDIR)$(BINDIR)/hexd
-	install -D hexd.1.gz $(DESTDIR)$(SHAREDIR)/man/man1/hexd.1.gz
-
-hexd: hexd.c
-	$(CC) $(CFLAGS) -o $@ $^
-
-hexd.1.gz: hexd.1
-	gzip -k hexd.1
+	install -D hexd.1 $(DESTDIR)$(MANDIR)/man1/hexd.1
