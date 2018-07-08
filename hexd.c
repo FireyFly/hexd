@@ -47,7 +47,7 @@ const char *CHAR_AREA_HIGH_LUT[] = {
 };
 
 void hexdump(FILE *f, const char *filename) {
-  u8 buf[BUFSIZ];
+  u8 line[option_columns];
   u8 prev_line[option_columns];
 
   bool first_line = true, printed_asterisk = false;
@@ -55,72 +55,62 @@ void hexdump(FILE *f, const char *filename) {
   // Seek to start; fall back to a consuming loop for non-seekable files
   if (fseeko(f, option_range.start, SEEK_SET) < 0) {
     off_t remaining = option_range.start;
-    while (remaining != 0 && !feof(f) && !ferror(f)) {
-      size_t n = fread(buf, 1, MIN(remaining, BUFSIZ), f);
-      remaining -= n;
-      if (n == 0) break;
-    }
+    while (remaining != 0 && fgetc(f) != EOF) remaining--;
     if (ferror(f)) err(1, "(while seeking) %s", filename);
   }
 
-  off_t count = option_range.end - option_range.start;
-  off_t read = 0;
-  while (read != count && !feof(f) && !ferror(f)) {
-    size_t to_read = option_range.end == -1? BUFSIZ : MIN(count - read, BUFSIZ);
-    size_t n = fread(buf, 1, to_read, f);
+  for (off_t offset = option_range.start; offset < option_range.end || option_range.end == -1; offset += option_columns) {
+    off_t read = offset - option_range.start;
+    size_t n = fread(line, 1, option_columns, f);
+    if (n == 0) break;
 
-    for (size_t i = 0; i < n; i += option_columns) {
-      u8 *p = &buf[i];
-
-      // Contract repeated identical lines
-      if (!first_line && memcmp(p, prev_line, option_columns) == 0) {
-        if (!printed_asterisk) {
-          printf("%8s\n", "*");
-          printed_asterisk = true;
-        }
-        continue;
+    // Contract repeated identical lines
+    if (!first_line && memcmp(line, prev_line, option_columns) == 0 && n == option_columns) {
+      if (!printed_asterisk) {
+        printf("%8s\n", "*");
+        printed_asterisk = true;
       }
-      printed_asterisk = false;
-
-      // Offset
-      intmax_t offset = option_range.start + read + i;
-      printf("%5jx%03jx", offset >> 12, offset & 0xFFF);
-
-      // Print hex area
-      const char *prev_fmt = NULL;
-      for (size_t j = 0; j < option_columns; j++) {
-        if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
-        if (i + j < n) {
-          const char *fmt = format_of(p[j]);
-          if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
-          printf(" %02x", p[j]);
-          prev_fmt = fmt;
-        } else {
-          printf("   ");
-        }
-      }
-      putchar(' ');
-
-      // Print char area
-      for (size_t j = 0; j < option_columns; j++) {
-        if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
-        if (i + j < n) {
-          const char *fmt = format_of(p[j]);
-          if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
-          if (p[j] >= 0x80) printf("%s", CHAR_AREA_HIGH_LUT[p[j] - 0x80]);
-          else putchar(isprint(p[j])? p[j] : '.');
-          prev_fmt = fmt;
-        } else {
-          putchar(' ');
-        }
-      }
-      printf("%s\n", option_use_formatting? "\x1B[m" : "");
-
-      memcpy(prev_line, p, MIN(n - i, option_columns));
-      first_line = false;
+      continue;
     }
+    printed_asterisk = false;
 
-    read += n;
+    // Offset
+    intmax_t offset = option_range.start + read;
+    printf("%5jx%03jx", offset >> 12, offset & 0xFFF);
+
+    // Print hex area
+    const char *prev_fmt = NULL;
+    for (size_t j = 0; j < option_columns; j++) {
+      if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
+      if (j < n) {
+        const char *fmt = format_of(line[j]);
+        if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
+        printf(" %02x", line[j]);
+        prev_fmt = fmt;
+      } else {
+        printf("   ");
+      }
+    }
+    putchar(' ');
+
+    // Print char area
+    for (size_t j = 0; j < option_columns; j++) {
+      if (option_groupsize != 0 && j % option_groupsize == 0) printf(" ");
+      if (j < n) {
+        const char *fmt = format_of(line[j]);
+        if (prev_fmt != fmt && option_use_formatting) printf("\x1B[%sm", fmt);
+        if (line[j] >= 0x80) printf("%s", CHAR_AREA_HIGH_LUT[line[j] - 0x80]);
+        else putchar(isprint(line[j])? line[j] : '.');
+        prev_fmt = fmt;
+      } else {
+        putchar(' ');
+      }
+    }
+    printf("%s\n", option_use_formatting? "\x1B[m" : "");
+
+    memcpy(prev_line, line, n);
+    first_line = false;
+    if (n < option_columns) break;
   }
 
   if (ferror(f)) err(1, "(while reading) %s", filename);
