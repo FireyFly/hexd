@@ -145,16 +145,20 @@ struct offset_range parse_range(const char *str) {
 }
 
 int main(int argc, char *argv[]) {
+  // Default to colourful output if output is a TTY
+  option_use_formatting = isatty(1);
+
   // Parse options
   int opt;
-  while (opt = getopt(argc, argv, "g:pr:w:"), opt != -1) {
+  while (opt = getopt(argc, argv, "g:pPr:w:"), opt != -1) {
     switch (opt) {
       case 'g': option_groupsize = atol(optarg); break;
       case 'p': option_use_formatting = false; break;
+      case 'P': option_use_formatting = true; break;
       case 'r': option_range = parse_range(optarg); break;
       case 'w': option_columns = atol(optarg); break;
       default:
-        fprintf(stderr, "usage: hexd [-p] [-g groupsize] [-r range] [-w width]\n");
+        fprintf(stderr, "usage: hexd [-p] [-P] [-g groupsize] [-r range] [-w width]\n");
         return 1;
     }
   }

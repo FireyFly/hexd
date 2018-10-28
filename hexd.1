@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl p
+.Op Fl P
 .Op Fl g Ar groupsize
 .Op Fl r Ar range
 .Op Fl w Ar width
@@ -30,6 +31,8 @@ The ranges an octet is classified into are
 and
 .Em all
 .Li ( 0xFF ) .
+.Pp
+By default, colours are used if output is a terminal, and omitted if not.
 .Sh OPTIONS
 If no
 .Ar file
@@ -38,6 +41,8 @@ listed below.
 .Bl -tag -width Ds
 .It Fl p
 Plain: disable colours/formatting.
+.It Fl P
+Pretty: enable colours/formatting.
 .It Fl g Ar groupsize
 Number of octets per group, set to
 .Li 8
