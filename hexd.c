@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 
   // Parse options
   int opt;
-  while (opt = getopt(argc, argv, "g:pPr:w:v"), opt != -1) {
+  while (opt = getopt(argc, argv, "g:hpPr:w:v"), opt != -1) {
     switch (opt) {
       case 'g': option_groupsize = atol(optarg); break;
       case 'p': option_use_formatting = false; break;
@@ -162,6 +162,7 @@ int main(int argc, char *argv[]) {
       case 'r': option_range = parse_range(optarg); break;
       case 'v': option_collapse_repetition = false; break;
       case 'w': option_columns = atol(optarg); break;
+      case 'h': // fall through
       default:
         fprintf(stderr, "usage: hexd [-p] [-P] [-v] [-g groupsize] [-r range] [-w width]\n");
         return 1;
