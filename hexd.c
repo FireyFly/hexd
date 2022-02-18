@@ -18,6 +18,7 @@ struct offset_range { off_t start, end; };
 size_t option_columns      = 16;
 size_t option_groupsize    = 8;
 bool option_use_formatting = true;
+bool option_collapse_repetition = true;
 struct offset_range option_range  = { 0, -1 };
 
 const char *formatting_zero      = "38;5;238";
@@ -65,7 +66,10 @@ void hexdump(FILE *f, const char *filename) {
     if (n == 0) break;
 
     // Contract repeated identical lines
-    if (!first_line && memcmp(line, prev_line, option_columns) == 0 && n == option_columns) {
+    if (!first_line
+          && option_collapse_repetition
+          && memcmp(line, prev_line, option_columns) == 0
+          && n == option_columns) {
       if (!printed_asterisk) {
         printf("%8s\n", "*");
         printed_asterisk = true;
@@ -150,15 +154,17 @@ int main(int argc, char *argv[]) {
 
   // Parse options
   int opt;
-  while (opt = getopt(argc, argv, "g:pPr:w:"), opt != -1) {
+  while (opt = getopt(argc, argv, "g:hpPr:w:v"), opt != -1) {
     switch (opt) {
       case 'g': option_groupsize = atol(optarg); break;
       case 'p': option_use_formatting = false; break;
       case 'P': option_use_formatting = true; break;
       case 'r': option_range = parse_range(optarg); break;
+      case 'v': option_collapse_repetition = false; break;
       case 'w': option_columns = atol(optarg); break;
+      case 'h': // fall through
       default:
-        fprintf(stderr, "usage: hexd [-p] [-P] [-g groupsize] [-r range] [-w width]\n");
+        fprintf(stderr, "usage: hexd [-p] [-P] [-v] [-g groupsize] [-r range] [-w width]\n");
         return 1;
     }
   }
