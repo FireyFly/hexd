@@ -1,4 +1,4 @@
-.Dd October 11, 2016
+.Dd February 18, 2022
 .Dt HEXD 1
 .Os
 .Sh NAME
@@ -8,6 +8,7 @@
 .Nm
 .Op Fl p
 .Op Fl P
+.Op Fl v
 .Op Fl g Ar groupsize
 .Op Fl r Ar range
 .Op Fl w Ar width
@@ -33,6 +34,11 @@ and
 .Li ( 0xFF ) .
 .Pp
 By default, colours are used if output is a terminal, and omitted if not.
+.Pp
+Repeated output lines are collapsed into only one copy followed by a line with
+only '*', unless
+.Fl v
+is used.
 .Sh OPTIONS
 If no
 .Ar file
@@ -43,6 +49,8 @@ listed below.
 Plain: disable colours/formatting.
 .It Fl P
 Pretty: enable colours/formatting.
+.It Fl v
+Verbose: show every hexdump line (don't collapse repetition with '*').
 .It Fl g Ar groupsize
 Number of octets per group, set to
 .Li 8
@@ -112,4 +120,4 @@ flag is useful.
 .Xr xxd 1
 .Sh AUTHORS
 Written by
-.An Jonas ‘FireFly’ Höglund.
+.An FireFly
